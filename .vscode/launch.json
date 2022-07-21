@@ -15,8 +15,7 @@
             "args" : [
                 "-a",
                 "-p",
-                "all",
-                "-1",
+                "simple",
                 "speedtest.ipv4.jsonl",
                 "speedtest.ipv6.jsonl",
             ]

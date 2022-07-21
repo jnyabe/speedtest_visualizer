@@ -1,48 +1,41 @@
 #!/usr/bin/env python3
 
 import pandas as pd
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 from pandas import json_normalize
 import json
 from pytz import timezone
 import pytz
 from dateutil import parser
+import dateutil.tz
 from optparse import OptionParser
 
-# IPv6
-# jp.as.speedtest.i3d.net (21569)
-# Internet Multifeed Co
-
-# IPv4
-# jp.as.speedtest.i3d.net (21569)
-# NTT-ME Corporation
 
 graph_property = {
     'download.bandwidth': {
         'title':'Download Speed',
         'unit':'Mbps',
-        'border':{'fps':30, 'movie':25, 'video conference':15,'mail':10}
+        'lines':{'fps':30, 'movie':25, 'video conference':15,'mail':10}
         },
     'upload.bandwidth': {
         'title':'Upload Speed',
         'unit':'Mbps',
-        'border':{'video conference':15}
+        'lines':{'video conference':15}
         },
     'ping.latency': {
         'title': 'Ping',
         'unit':'ms',
-        'border':{'fps':50}
+        'lines':{'fps':50}
         },
     'ping.jitter': {
         'title': 'Jitter',
         'unit':'ms',
-        'border':{'fps':10}
+        'lines':{'fps':10}
         },
     'packetLoss': {
         'title':'PacketLoss',
         'unit':'%',
-        'border':{'fps':2}
+        'lines':{'fps':2}
         },
 }
 
@@ -60,29 +53,16 @@ class SpeedTestData:
     def bps_to_mbps(bit):
         # bps (bit per second) -> Mbps (mega 
         return bit / 125000
-
-    @staticmethod
-    def utc_to_jtc(utc):
-        try:
-            utc = parser.parse(utc);
-            jst = utc.astimezone(timezone('Asia/Tokyo'))
-            # dt = jst.strftime('%m/%d\n%H:%M')
-            dt = jst.strftime('%a\n%H:%M')
-        except TypeError:
-            dt = 'nan' 
-        return dt
         
     def load(self, file, options):
         with open(file) as f:
             lines = f.readlines()
         df = pd.json_normalize(json.loads('['+ ','.join(lines) + ']'))
         # bps -> Mbps
-
         df['download.bandwidth'] = df['download.bandwidth'].map(lambda x: x / 125000)
         df['upload.bandwidth'] = df['upload.bandwidth'].map(lambda x: x / 125000)
-        # UTC -> LocalTime
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
-#        df['timestamp'] = df['timestamp'].map(lambda x: self.utc_to_jtc(x))
+        # convert string to TimeStamp in local time
+        df['timestamp'] = pd.to_datetime(df['timestamp']).map(lambda x: x.tz_convert(dateutil.tz.tzlocal()))
         df.set_index('timestamp', drop=False)
         if options.verbose:
             print(df['isp'])
@@ -157,8 +137,9 @@ class SpeedTestGraph:
                         self.ax[key] = self.fig[key].add_subplot(111)
                     self.ax[key].set_title(graph_property[key]['title'])
                     self.ax[key].set_ylabel(graph_property[key]['unit'])
-                    for label in graph_property[key]['border'].keys():
-                            self.ax[key].axhline(y=graph_property[key]['border'][label], color='r', ls='--', label=label)
+                   
+                    for label in graph_property[key]['lines'].keys():
+                        self.ax[key].axhline(y=graph_property[key]['lines'][label], color='blue', ls='dashed', label=label)
         return
                 
     def draw_graph(self, data):
