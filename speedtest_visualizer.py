@@ -15,27 +15,27 @@ graph_property = {
     'download.bandwidth': {
         'title':'Download Speed',
         'unit':'Mbps',
-        'lines':{'fps':30, 'movie':25, 'video conference':15,'mail':10}
+   #     'lines':{'fps':30, 'movie':25, 'video conference':15,'mail':10}
         },
     'upload.bandwidth': {
         'title':'Upload Speed',
         'unit':'Mbps',
-        'lines':{'video conference':15}
+  #      'lines':{'video conference':15}
         },
     'ping.latency': {
         'title': 'Ping',
         'unit':'ms',
-        'lines':{'fps':50}
+     #   'lines':{'fps':50}
         },
     'ping.jitter': {
         'title': 'Jitter',
         'unit':'ms',
-        'lines':{'fps':10}
+    #    'lines':{'fps':10}
         },
     'packetLoss': {
         'title':'PacketLoss',
         'unit':'%',
-        'lines':{'fps':2}
+    #    'lines':{'fps':2}
         },
 }
 
@@ -51,16 +51,16 @@ class SpeedTestData:
             
     @staticmethod 
     def bps_to_mbps(bit):
-        # bps (bit per second) -> Mbps (mega 
-        return bit / 125000
+        # bps (bit per second) -> Mbps (mega) 
+        return bit / (1024 * 1024)
         
     def load(self, file, options):
         with open(file) as f:
             lines = f.readlines()
         df = pd.json_normalize(json.loads('['+ ','.join(lines) + ']'))
         # bps -> Mbps
-        df['download.bandwidth'] = df['download.bandwidth'].map(lambda x: x / 125000)
-        df['upload.bandwidth'] = df['upload.bandwidth'].map(lambda x: x / 125000)
+        df['download.bandwidth'] = df['download.bandwidth'].map(lambda x: x / (1024 * 1024))
+        df['upload.bandwidth'] = df['upload.bandwidth'].map(lambda x: x / (1024 * 1024))
         # convert string to TimeStamp in local time
         df['timestamp'] = pd.to_datetime(df['timestamp']).map(lambda x: x.tz_convert(dateutil.tz.tzlocal()))
         df.set_index('timestamp', drop=False)
@@ -79,8 +79,8 @@ class SpeedTestData:
         print("file name: " + self.file)
         # print(self.df.dtypes)
         print(self.df.describe(exclude=['O'],datetime_is_numeric=True))
+
         
-    
 class SpeedTestGraph:
     axes_props = {
         'download': {
@@ -138,6 +138,9 @@ class SpeedTestGraph:
                     self.ax[key].set_title(graph_property[key]['title'])
                     self.ax[key].set_ylabel(graph_property[key]['unit'])
                    
+                    if not 'lines' in graph_property[key].keys():
+                        continue
+
                     for label in graph_property[key]['lines'].keys():
                         self.ax[key].axhline(y=graph_property[key]['lines'][label], color='blue', ls='dashed', label=label)
         return
@@ -153,8 +156,9 @@ class SpeedTestGraph:
           
         for df in data:
             df.dump()
+            # df.df = df.df.loc[df.df["timestamp"].between('2022-07-11', '2022-07-12')]              
             for key in graph_property:
-                if key in self.props['figs']:                
+                if key in self.props['figs'] and key in df.df.columns:  
                     df.df.plot(x='timestamp', y=key, ax=self.ax[key], label=df.label)
         plt.show()
 

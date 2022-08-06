@@ -13,12 +13,27 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args" : [
-                "-a",
                 "-p",
-                "simple",
-                "speedtest.ipv4.jsonl",
-                "speedtest.ipv6.jsonl",
+                "all",
+                "-a",
+                "wakwak.jsonl",
+                "plala.jsonl",
+                "asahi.jsonl",
+                "sonet.jsonl",
+            //    "wakwak-ipoe.jsonl",
+            ]
+        },
+        {
+            "name": "Python: speedtest_csv2jsonl",
+            "type": "python",
+            "request": "launch",
+            "program": "speedtest_csv2jsonl.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args" : [
+                "speedtest-ntt.csv",
             ]
         }
+
     ]
 }
